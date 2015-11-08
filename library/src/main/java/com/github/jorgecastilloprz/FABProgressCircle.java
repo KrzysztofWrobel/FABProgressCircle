@@ -97,24 +97,11 @@ public class FABProgressCircle extends FrameLayout implements ArcListener, Compl
         attrArray.recycle();
       }
     }
+
   }
 
   private TypedArray getAttributes(AttributeSet attrs) {
     return getContext().obtainStyledAttributes(attrs, R.styleable.FABProgressCircle, 0, 0);
-  }
-
-  @Override protected void onFinishInflate() {
-    super.onFinishInflate();
-    checkChildCount();
-  }
-
-  @Override protected void onMeasure(int widthMeasureSpec, int heightMeasureSpec) {
-    super.onMeasure(widthMeasureSpec, heightMeasureSpec);
-    if (!viewsAdded) {
-      addArcView();
-      setupFab();
-      viewsAdded = true;
-    }
   }
 
   /**
@@ -128,6 +115,7 @@ public class FABProgressCircle extends FrameLayout implements ArcListener, Compl
     addView(progressArc,
         new FrameLayout.LayoutParams(getFabDimension() + arcWidth, getFabDimension() + arcWidth,
             Gravity.CENTER));
+    progressArc.setVisibility(INVISIBLE);
   }
 
   private void setupFab() {
@@ -139,13 +127,25 @@ public class FABProgressCircle extends FrameLayout implements ArcListener, Compl
     }
   }
 
+  @Override
+  protected void onFinishInflate() {
+    super.onFinishInflate();
+
+    checkChildCount();
+    addArcView();
+    setupFab();
+    addCompleteFabView();
+    ViewCompat.setElevation(completeFABView, ViewCompat.getElevation(getChildAt(0)) + 1);
+    completeFABView.setVisibility(INVISIBLE);
+  }
+
   /**
    * FABProgressCircle will get its dimensions depending on its child dimensions. It will be easier
    * to force proper graphic standards for the button if we can get sure that only one child is
    * present. Every FAB library around has a single root layout, so it should not be an issue.
    */
   private void checkChildCount() {
-    if (getChildCount() != 1) {
+    if (getChildCount() > 1) {
       throw new IllegalStateException(getResources().getString(R.string.child_count_error));
     }
   }
@@ -155,6 +155,7 @@ public class FABProgressCircle extends FrameLayout implements ArcListener, Compl
   }
 
   public void show() {
+    progressArc.setVisibility(VISIBLE);
     progressArc.show();
   }
 
@@ -164,6 +165,7 @@ public class FABProgressCircle extends FrameLayout implements ArcListener, Compl
    */
   public void hide() {
     progressArc.stop();
+    progressArc.setVisibility(INVISIBLE);
   }
 
   public void beginFinalAnimation() {
@@ -187,9 +189,8 @@ public class FABProgressCircle extends FrameLayout implements ArcListener, Compl
    * are in a pre lollipop device.
    */
   private void displayColorTransformAnimation() {
-    addCompleteFabView();
-    ViewCompat.setElevation(completeFABView, ViewCompat.getElevation(getChildAt(0)) + 1);
-    completeFABView.animate(progressArc.getScaleDownAnimator());
+    completeFABView.setVisibility(VISIBLE);
+     completeFABView.animate(progressArc.getScaleDownAnimator());
   }
 
   private void addCompleteFabView() {
@@ -211,6 +212,8 @@ public class FABProgressCircle extends FrameLayout implements ArcListener, Compl
       progressArc.reset();
       completeFABView.reset();
     }
+//    progressArc.stop();
+    progressArc.setVisibility(INVISIBLE);
   }
 
   private boolean isReusable() {
